@@ -1,4 +1,5 @@
 import { buscarClientes } from "@/lib/actions/clientes";
+import { buscarConfiguracaoFidelidade } from "@/lib/actions/fidelidade";
 import { ClienteSearch } from "@/components/clientes/cliente-search";
 import { ClienteCard } from "@/components/clientes/cliente-card";
 import { ClienteFormModal } from "@/components/clientes/cliente-form-modal";
@@ -10,7 +11,7 @@ export default async function ClientesPage(props: PageProps<"/clientes">) {
   const qBruto = params.q;
   const q = (Array.isArray(qBruto) ? qBruto[0] : qBruto) ?? "";
 
-  const clientes = await buscarClientes(q);
+  const [clientes, config] = await Promise.all([buscarClientes(q), buscarConfiguracaoFidelidade()]);
   const buscando = q.trim().length > 0;
   const digitosQuery = normalizaTelefone(q);
   // Um termo com 8+ dígitos foi digitado como telefone (não como nome) —
@@ -46,7 +47,12 @@ export default async function ClientesPage(props: PageProps<"/clientes">) {
 
       <div className="flex flex-col gap-3">
         {clientes.map((cliente) => (
-          <ClienteCard key={cliente.id} cliente={cliente} />
+          <ClienteCard
+            key={cliente.id}
+            cliente={cliente}
+            diasParaAtencao={config?.diasParaAtencao}
+            diasParaInativo={config?.diasParaInativo}
+          />
         ))}
 
         {buscando && clientes.length === 0 ? (

@@ -2,12 +2,20 @@ import Link from "next/link";
 import type { ClienteResumo } from "@/lib/actions/clientes";
 import { formataTelefone } from "@/lib/utils/telefone";
 import { RegistrarCompraModal } from "@/components/compras/registrar-compra-modal";
+import { StatusBadge } from "@/components/clientes/status-badge";
 
 function formatarData(iso: string): string {
   return new Date(iso).toLocaleDateString("pt-BR");
 }
 
-export function ClienteCard({ cliente }: { cliente: ClienteResumo }) {
+type ClienteCardProps = {
+  cliente: ClienteResumo;
+  /** Limites de classificação (item 9) — omitido quando a config ainda não existe (estado impossível na prática, config é seedada, mas defensivo). */
+  diasParaAtencao?: number;
+  diasParaInativo?: number;
+};
+
+export function ClienteCard({ cliente, diasParaAtencao, diasParaInativo }: ClienteCardProps) {
   const hrefPerfil = `/clientes/${cliente.id}`;
 
   return (
@@ -19,7 +27,16 @@ export function ClienteCard({ cliente }: { cliente: ClienteResumo }) {
     // perfil (item 6); só o botão de compra fica fora dos links.
     <div className="glass p-4 flex items-center justify-between gap-4 hover:border-[var(--border-strong)] transition-colors">
       <Link href={hrefPerfil} className="flex flex-col gap-0.5 min-w-0 flex-1">
-        <span className="font-semibold text-sm truncate">{cliente.nome}</span>
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="font-semibold text-sm truncate">{cliente.nome}</span>
+          {diasParaAtencao !== undefined && diasParaInativo !== undefined ? (
+            <StatusBadge
+              ultimaCompraEm={cliente.ultimaCompraEm}
+              diasParaAtencao={diasParaAtencao}
+              diasParaInativo={diasParaInativo}
+            />
+          ) : null}
+        </div>
         <span className="text-xs text-[var(--text-muted)]">{formataTelefone(cliente.telefone)}</span>
       </Link>
 

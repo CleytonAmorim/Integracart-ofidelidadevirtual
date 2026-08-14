@@ -9,6 +9,7 @@ import { RegistrarCompraModal } from "@/components/compras/registrar-compra-moda
 import { HistoricoCompras } from "@/components/compras/historico-compras";
 import { ResgatarPremioModal } from "@/components/fidelidade/resgatar-premio-modal";
 import { DescontoBanner } from "@/components/fidelidade/desconto-banner";
+import { StatusBadge } from "@/components/clientes/status-badge";
 
 function formatarData(iso: string): string {
   return new Date(iso).toLocaleDateString("pt-BR");
@@ -62,6 +63,13 @@ export default async function ClientePage(props: PageProps<"/clientes/[id]">) {
                 telefoneInicial={cliente.telefone}
                 variante="icone"
               />
+              {config ? (
+                <StatusBadge
+                  ultimaCompraEm={cliente.ultimaCompraEm}
+                  diasParaAtencao={config.diasParaAtencao}
+                  diasParaInativo={config.diasParaInativo}
+                />
+              ) : null}
             </div>
             <span className="text-sm text-[var(--text-muted)]">{formataTelefone(cliente.telefone)}</span>
           </div>
