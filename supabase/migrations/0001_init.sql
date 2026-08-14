@@ -5,6 +5,12 @@
 -- ============================================================================
 
 -- ---------------------------------------------------------------------------
+-- extensão para busca por nome (ILIKE/trigram) — precisa vir antes de
+-- qualquer índice gin (...gin_trgm_ops) que dependa dela.
+-- ---------------------------------------------------------------------------
+create extension if not exists pg_trgm;
+
+-- ---------------------------------------------------------------------------
 -- estabelecimentos
 -- ---------------------------------------------------------------------------
 create table public.estabelecimentos (
@@ -107,11 +113,6 @@ create table public.resgates (
 
 create index resgates_cliente_id_idx on public.resgates (cliente_id);
 create index resgates_estabelecimento_id_idx on public.resgates (estabelecimento_id);
-
--- ---------------------------------------------------------------------------
--- extensão para busca por nome (ILIKE/trigram) — usada no índice de clientes.nome
--- ---------------------------------------------------------------------------
-create extension if not exists pg_trgm;
 
 -- ============================================================================
 -- Row Level Security — modelo multi-tenant: cada usuário só enxerga/mexe nos

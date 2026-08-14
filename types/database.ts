@@ -1,219 +1,398 @@
 /**
- * Tipos do banco escritos à mão a partir de supabase/migrations/0001_init.sql.
- * O formato (Row/Insert/Update/Relationships por tabela) segue a forma que o
- * @supabase/supabase-js espera dos genéricos (GenericTable/GenericSchema) —
- * sem "Relationships" o client não consegue resolver os tipos e cai em `never`.
- *
- * TODO: assim que houver acesso ao Supabase CLI logado neste projeto, trocar
- * por `supabase gen types typescript --project-id qgpnozjaqoykzzmgafgt > types/database.ts`
- * para manter 100% sincronizado com o schema real.
+ * Gerado automaticamente pelo Supabase a partir do schema real do projeto
+ * (qgpnozjaqoykzzmgafgt), via `generate_typescript_types`. Não editar à mão —
+ * para atualizar depois de uma nova migração, gerar de novo (equivalente a
+ * `supabase gen types typescript --project-id qgpnozjaqoykzzmgafgt`).
  */
 
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.15"
+  }
   public: {
     Tables: {
-      estabelecimentos: {
-        Row: {
-          id: string;
-          nome: string;
-          cor_primaria: string;
-          cor_destaque: string;
-          logo_url: string | null;
-          criado_em: string;
-        };
-        Insert: {
-          id?: string;
-          nome: string;
-          cor_primaria?: string;
-          cor_destaque?: string;
-          logo_url?: string | null;
-          criado_em?: string;
-        };
-        Update: Partial<Database["public"]["Tables"]["estabelecimentos"]["Insert"]>;
-        Relationships: [];
-      };
-      usuarios_estabelecimento: {
-        Row: {
-          id: string;
-          estabelecimento_id: string;
-          nome: string;
-          criado_em: string;
-        };
-        Insert: {
-          id: string;
-          estabelecimento_id: string;
-          nome: string;
-          criado_em?: string;
-        };
-        Update: Partial<Database["public"]["Tables"]["usuarios_estabelecimento"]["Insert"]>;
-        Relationships: [
-          {
-            foreignKeyName: "usuarios_estabelecimento_estabelecimento_id_fkey";
-            columns: ["estabelecimento_id"];
-            isOneToOne: false;
-            referencedRelation: "estabelecimentos";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
       clientes: {
         Row: {
-          id: string;
-          estabelecimento_id: string;
-          nome: string;
-          telefone: string;
-          pontos: number;
-          total_gasto: number;
-          ultima_compra_em: string | null;
-          token_publico: string;
-          criado_em: string;
-        };
+          criado_em: string
+          estabelecimento_id: string
+          id: string
+          nome: string
+          pontos: number
+          telefone: string
+          token_publico: string
+          total_gasto: number
+          ultima_compra_em: string | null
+        }
         Insert: {
-          id?: string;
-          estabelecimento_id: string;
-          nome: string;
-          telefone: string;
-          pontos?: number;
-          total_gasto?: number;
-          ultima_compra_em?: string | null;
-          token_publico?: string;
-          criado_em?: string;
-        };
-        Update: Partial<Database["public"]["Tables"]["clientes"]["Insert"]>;
+          criado_em?: string
+          estabelecimento_id: string
+          id?: string
+          nome: string
+          pontos?: number
+          telefone: string
+          token_publico?: string
+          total_gasto?: number
+          ultima_compra_em?: string | null
+        }
+        Update: {
+          criado_em?: string
+          estabelecimento_id?: string
+          id?: string
+          nome?: string
+          pontos?: number
+          telefone?: string
+          token_publico?: string
+          total_gasto?: number
+          ultima_compra_em?: string | null
+        }
         Relationships: [
           {
-            foreignKeyName: "clientes_estabelecimento_id_fkey";
-            columns: ["estabelecimento_id"];
-            isOneToOne: false;
-            referencedRelation: "estabelecimentos";
-            referencedColumns: ["id"];
+            foreignKeyName: "clientes_estabelecimento_id_fkey"
+            columns: ["estabelecimento_id"]
+            isOneToOne: false
+            referencedRelation: "estabelecimentos"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       compras: {
         Row: {
-          id: string;
-          cliente_id: string;
-          estabelecimento_id: string;
-          valor: number;
-          pontos_gerados: number;
-          criado_em: string;
-        };
+          cliente_id: string
+          criado_em: string
+          estabelecimento_id: string
+          id: string
+          pontos_gerados: number
+          valor: number
+        }
         Insert: {
-          id?: string;
-          cliente_id: string;
-          estabelecimento_id: string;
-          valor: number;
-          pontos_gerados?: number;
-          criado_em?: string;
-        };
-        Update: Partial<Database["public"]["Tables"]["compras"]["Insert"]>;
+          cliente_id: string
+          criado_em?: string
+          estabelecimento_id: string
+          id?: string
+          pontos_gerados?: number
+          valor: number
+        }
+        Update: {
+          cliente_id?: string
+          criado_em?: string
+          estabelecimento_id?: string
+          id?: string
+          pontos_gerados?: number
+          valor?: number
+        }
         Relationships: [
           {
-            foreignKeyName: "compras_cliente_id_fkey";
-            columns: ["cliente_id"];
-            isOneToOne: false;
-            referencedRelation: "clientes";
-            referencedColumns: ["id"];
+            foreignKeyName: "compras_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "compras_estabelecimento_id_fkey";
-            columns: ["estabelecimento_id"];
-            isOneToOne: false;
-            referencedRelation: "estabelecimentos";
-            referencedColumns: ["id"];
+            foreignKeyName: "compras_estabelecimento_id_fkey"
+            columns: ["estabelecimento_id"]
+            isOneToOne: false
+            referencedRelation: "estabelecimentos"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
       configuracao_fidelidade: {
         Row: {
-          estabelecimento_id: string;
-          pontos_por_compra: number;
-          compras_para_premio: number;
-          descricao_premio: string;
-          compras_para_desconto: number;
-          desconto_descricao: string;
-          dias_para_atencao: number;
-          dias_para_inativo: number;
-        };
+          compras_para_desconto: number
+          compras_para_premio: number
+          desconto_descricao: string
+          descricao_premio: string
+          dias_para_atencao: number
+          dias_para_inativo: number
+          estabelecimento_id: string
+          pontos_por_compra: number
+        }
         Insert: {
-          estabelecimento_id: string;
-          pontos_por_compra?: number;
-          compras_para_premio?: number;
-          descricao_premio?: string;
-          compras_para_desconto?: number;
-          desconto_descricao?: string;
-          dias_para_atencao?: number;
-          dias_para_inativo?: number;
-        };
-        Update: Partial<Database["public"]["Tables"]["configuracao_fidelidade"]["Insert"]>;
+          compras_para_desconto?: number
+          compras_para_premio?: number
+          desconto_descricao?: string
+          descricao_premio?: string
+          dias_para_atencao?: number
+          dias_para_inativo?: number
+          estabelecimento_id: string
+          pontos_por_compra?: number
+        }
+        Update: {
+          compras_para_desconto?: number
+          compras_para_premio?: number
+          desconto_descricao?: string
+          descricao_premio?: string
+          dias_para_atencao?: number
+          dias_para_inativo?: number
+          estabelecimento_id?: string
+          pontos_por_compra?: number
+        }
         Relationships: [
           {
-            foreignKeyName: "configuracao_fidelidade_estabelecimento_id_fkey";
-            columns: ["estabelecimento_id"];
-            isOneToOne: true;
-            referencedRelation: "estabelecimentos";
-            referencedColumns: ["id"];
+            foreignKeyName: "configuracao_fidelidade_estabelecimento_id_fkey"
+            columns: ["estabelecimento_id"]
+            isOneToOne: true
+            referencedRelation: "estabelecimentos"
+            referencedColumns: ["id"]
           },
-        ];
-      };
+        ]
+      }
+      estabelecimentos: {
+        Row: {
+          cor_destaque: string
+          cor_primaria: string
+          criado_em: string
+          id: string
+          logo_url: string | null
+          nome: string
+        }
+        Insert: {
+          cor_destaque?: string
+          cor_primaria?: string
+          criado_em?: string
+          id?: string
+          logo_url?: string | null
+          nome: string
+        }
+        Update: {
+          cor_destaque?: string
+          cor_primaria?: string
+          criado_em?: string
+          id?: string
+          logo_url?: string | null
+          nome?: string
+        }
+        Relationships: []
+      }
       resgates: {
         Row: {
-          id: string;
-          cliente_id: string;
-          estabelecimento_id: string;
-          pontos_utilizados: number;
-          criado_em: string;
-        };
+          cliente_id: string
+          criado_em: string
+          estabelecimento_id: string
+          id: string
+          pontos_utilizados: number
+        }
         Insert: {
-          id?: string;
-          cliente_id: string;
-          estabelecimento_id: string;
-          pontos_utilizados: number;
-          criado_em?: string;
-        };
-        Update: Partial<Database["public"]["Tables"]["resgates"]["Insert"]>;
+          cliente_id: string
+          criado_em?: string
+          estabelecimento_id: string
+          id?: string
+          pontos_utilizados: number
+        }
+        Update: {
+          cliente_id?: string
+          criado_em?: string
+          estabelecimento_id?: string
+          id?: string
+          pontos_utilizados?: number
+        }
         Relationships: [
           {
-            foreignKeyName: "resgates_cliente_id_fkey";
-            columns: ["cliente_id"];
-            isOneToOne: false;
-            referencedRelation: "clientes";
-            referencedColumns: ["id"];
+            foreignKeyName: "resgates_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "resgates_estabelecimento_id_fkey";
-            columns: ["estabelecimento_id"];
-            isOneToOne: false;
-            referencedRelation: "estabelecimentos";
-            referencedColumns: ["id"];
+            foreignKeyName: "resgates_estabelecimento_id_fkey"
+            columns: ["estabelecimento_id"]
+            isOneToOne: false
+            referencedRelation: "estabelecimentos"
+            referencedColumns: ["id"]
           },
-        ];
-      };
-    };
-    Views: Record<string, never>;
+        ]
+      }
+      usuarios_estabelecimento: {
+        Row: {
+          criado_em: string
+          estabelecimento_id: string
+          id: string
+          nome: string
+        }
+        Insert: {
+          criado_em?: string
+          estabelecimento_id: string
+          id: string
+          nome: string
+        }
+        Update: {
+          criado_em?: string
+          estabelecimento_id?: string
+          id?: string
+          nome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usuarios_estabelecimento_estabelecimento_id_fkey"
+            columns: ["estabelecimento_id"]
+            isOneToOne: false
+            referencedRelation: "estabelecimentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
     Functions: {
       buscar_cliente_publico: {
-        Args: { p_token: string };
+        Args: { p_token: string }
         Returns: {
-          nome: string;
-          pontos: number;
-          criado_em: string;
-          cor_primaria: string;
-          cor_destaque: string;
-          logo_url: string | null;
-          compras_para_premio: number;
-          descricao_premio: string;
-          compras_para_desconto: number;
-          desconto_descricao: string;
-        }[];
-      };
-      estabelecimento_do_usuario_atual: {
-        Args: Record<string, never>;
-        Returns: string;
-      };
-    };
-    Enums: Record<string, never>;
-    CompositeTypes: Record<string, never>;
-  };
-};
+          compras_para_desconto: number
+          compras_para_premio: number
+          cor_destaque: string
+          cor_primaria: string
+          criado_em: string
+          desconto_descricao: string
+          descricao_premio: string
+          logo_url: string
+          nome: string
+          pontos: number
+        }[]
+      }
+      estabelecimento_do_usuario_atual: { Args: never; Returns: string }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {},
+  },
+} as const
