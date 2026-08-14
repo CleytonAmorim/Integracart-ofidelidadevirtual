@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { buscarEstabelecimentoAtual } from "@/lib/actions/estabelecimento";
 import { logout } from "@/lib/actions/auth";
+import { ToastProvider } from "@/components/ui/toast";
 
 // Layout de grupo de rotas — (app) não tem URL própria (é só organização),
 // então não existe um único "/rota" para tipar via LayoutProps<'/rota'>: esse
@@ -72,7 +73,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
       </aside>
 
-      <main className="flex-1 p-8 overflow-y-auto">{children}</main>
+      <main className="flex-1 p-8 overflow-y-auto">
+        <ToastProvider>{children}</ToastProvider>
+      </main>
     </div>
   );
 }

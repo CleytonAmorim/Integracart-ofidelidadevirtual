@@ -264,6 +264,14 @@ export type Database = {
         }[]
       }
       estabelecimento_do_usuario_atual: { Args: never; Returns: string }
+      registrar_compra: {
+        Args: { p_cliente_id: string; p_valor: number }
+        Returns: {
+          pontos: number
+          total_gasto: number
+          ultima_compra_em: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

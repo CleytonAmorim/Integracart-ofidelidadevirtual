@@ -24,6 +24,11 @@
   --text-secondary: #d3b8e8;
   --text-muted: #9b82b8;
   --erro: #ff6b6b;
+  /* Mesmo verde das cores de status fixas (ver lib/utils/classificacao.ts,
+     status "ativo") — reaproveitado aqui com um nome semântico próprio
+     porque o toast de sucesso não deve mudar se um dia as cores de status
+     forem ajustadas independentemente. */
+  --sucesso: #0ca30c;
 }
 
 @theme inline {
@@ -42,6 +47,7 @@
   --color-text-secondary: var(--text-secondary);
   --color-text-muted: var(--text-muted);
   --color-erro: var(--erro);
+  --color-sucesso: var(--sucesso);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
