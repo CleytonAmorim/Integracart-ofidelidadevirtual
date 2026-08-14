@@ -131,12 +131,28 @@ export function ClienteFormModal({
       </button>
 
       {aberto ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={fechar}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          // No passo do WhatsApp, o toque de fechar-por-fora fica desligado de
+          // propósito (ver comentário abaixo, perto do fechamento do JSX) —
+          // aqui só cuidamos do caso comum (formulário aberto).
+          onClick={linkWhatsappPronto ? undefined : fechar}
+        >
           <div
             className="glass w-full max-w-sm p-6 flex flex-col gap-4"
             onClick={(e) => e.stopPropagation()}
           >
             {linkWhatsappPronto ? (
+              // Passo do WhatsApp pós-cadastro: em celular (o caso mais comum
+              // do atendente), o toque em "Cadastrar" acontece com o teclado
+              // aberto e o formulário some assim que o cadastro termina —
+              // essa troca de conteúdo, em telas de toque, pode gerar um
+              // clique "fantasma" (reenviado pelo navegador com atraso,
+              // depois que o layout já mudou) que caía bem em cima do fundo
+              // escuro por trás do modal, fechando tudo antes do atendente
+              // ver o botão do WhatsApp — daí o fechar-por-fora ficar
+              // desligado enquanto esse passo está visível (só fecha por um
+              // toque explícito: ✕, "Abrir WhatsApp" ou "Pular por agora").
               <>
                 <div className="flex items-center justify-between">
                   <h2 className="text-base font-bold">Cliente cadastrado 🎉</h2>
