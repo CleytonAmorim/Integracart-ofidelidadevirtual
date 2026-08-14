@@ -2,6 +2,7 @@ import { buscarClientes } from "@/lib/actions/clientes";
 import { ClienteSearch } from "@/components/clientes/cliente-search";
 import { ClienteCard } from "@/components/clientes/cliente-card";
 import { ClienteFormModal } from "@/components/clientes/cliente-form-modal";
+import { ScanQrModal } from "@/components/clientes/scan-qr-modal";
 import { normalizaTelefone } from "@/lib/utils/telefone";
 
 export default async function ClientesPage(props: PageProps<"/clientes">) {
@@ -26,7 +27,12 @@ export default async function ClientesPage(props: PageProps<"/clientes">) {
         </p>
       </div>
 
-      <ClienteSearch valorInicial={q} />
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex-1">
+          <ClienteSearch valorInicial={q} />
+        </div>
+        <ScanQrModal />
+      </div>
 
       {buscando && clientes.length > 1 ? (
         <p className="text-sm text-[var(--brand-accent)]">

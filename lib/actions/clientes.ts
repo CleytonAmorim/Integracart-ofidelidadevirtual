@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { buscarEstabelecimentoAtual } from "@/lib/actions/estabelecimento";
 import { normalizaTelefone, telefoneValido } from "@/lib/utils/telefone";
+import { linkWhatsapp, mensagemBoasVindas } from "@/lib/utils/whatsapp";
 
 export type ClienteResumo = {
   id: string;
@@ -64,13 +65,22 @@ export async function buscarClientes(query: string): Promise<ClienteResumo[]> {
 export type CadastroClienteState = {
   erro?: string;
   sucesso?: boolean;
+  /**
+   * Link wa.me pronto (número + mensagem de boas-vindas com o link da
+   * página pública do cliente) — o caller decide como/quando abrir, ver
+   * ClienteFormModal. Só vem preenchido quando NEXT_PUBLIC_SITE_URL está
+   * configurado (precisa de uma URL pública real, ver .env.example); sem
+   * isso o link da página pública ficaria quebrado dentro da mensagem.
+   */
+  linkWhatsapp?: string;
 };
 
 /**
  * Cadastro rápido de cliente (nome + telefone) — usado no modal de /clientes,
  * seja pelo fluxo "não encontrei ninguém" ou pelo "+ cadastrar outra pessoa
- * com esse telefone". Sem envio de WhatsApp/QR aqui: isso entra junto com a
- * página pública do cliente (item 8 da ordem de desenvolvimento).
+ * com esse telefone". `token_publico` já é gerado automaticamente pelo banco
+ * (default gen_random_uuid(), migração 0001) — aqui só lê de volta pra montar
+ * o link da página pública que vai na mensagem de boas-vindas por WhatsApp.
  */
 export async function cadastrarCliente(
   _prevState: CadastroClienteState,
@@ -92,18 +102,34 @@ export async function cadastrarCliente(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.from("clientes").insert({
-    estabelecimento_id: estabelecimento.id,
-    nome,
-    telefone,
-  });
+  const { data, error } = await supabase
+    .from("clientes")
+    .insert({
+      estabelecimento_id: estabelecimento.id,
+      nome,
+      telefone,
+    })
+    .select("token_publico")
+    .single();
 
-  if (error) {
+  if (error || !data) {
     return { erro: "Não foi possível cadastrar o cliente. Tente novamente." };
   }
 
   revalidatePath("/clientes");
-  return { sucesso: true };
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  if (!siteUrl) {
+    // Ainda não implantado (deploy na Vercel adiado por decisão do usuário,
+    // ver arquitetura) — sem domínio público não tem como montar um link
+    // que funcione, então o cadastro segue normal, só sem o passo de WhatsApp.
+    return { sucesso: true };
+  }
+
+  const linkPublico = `${siteUrl.replace(/\/$/, "")}/c/${data.token_publico}`;
+  const mensagem = mensagemBoasVindas(nome, estabelecimento.nome, linkPublico);
+
+  return { sucesso: true, linkWhatsapp: linkWhatsapp(telefone, mensagem) };
 }
 
 export type ClienteDetalhe = {
@@ -183,4 +209,26 @@ export async function atualizarCliente(
   revalidatePath(`/clientes/${clienteId}`);
   revalidatePath("/clientes");
   return { sucesso: true };
+}
+
+/**
+ * Busca o id do cliente a partir do token_publico lido no QR (fluxo do
+ * atendente, ScanQrModal em /clientes — diferente de buscar_cliente_publico,
+ * que é a RPC anônima usada pela própria página pública do cliente). Select
+ * comum, sem RPC: RLS ("select clientes do proprio estabelecimento") já
+ * garante que um QR de outro estabelecimento não retorna nada — mesmo
+ * padrão defensivo de buscarClientePorId (maybeSingle, trata como
+ * "não encontrado" em vez de vazar a diferença entre "não existe"/"não é seu").
+ */
+export async function buscarClientePorToken(token: string): Promise<{ id: string; nome: string } | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("clientes")
+    .select("id, nome")
+    .eq("token_publico", token)
+    .maybeSingle();
+
+  if (error || !data) return null;
+
+  return { id: data.id, nome: data.nome };
 }
