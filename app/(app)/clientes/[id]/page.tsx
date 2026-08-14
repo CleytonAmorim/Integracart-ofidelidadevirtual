@@ -2,10 +2,13 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { buscarClientePorId } from "@/lib/actions/clientes";
 import { buscarComprasDoCliente } from "@/lib/actions/compras";
+import { buscarConfiguracaoFidelidade } from "@/lib/actions/fidelidade";
 import { formataTelefone } from "@/lib/utils/telefone";
 import { ClienteFormModal } from "@/components/clientes/cliente-form-modal";
 import { RegistrarCompraModal } from "@/components/compras/registrar-compra-modal";
 import { HistoricoCompras } from "@/components/compras/historico-compras";
+import { ResgatarPremioModal } from "@/components/fidelidade/resgatar-premio-modal";
+import { DescontoBanner } from "@/components/fidelidade/desconto-banner";
 
 function formatarData(iso: string): string {
   return new Date(iso).toLocaleDateString("pt-BR");
@@ -15,17 +18,27 @@ function formatarMoeda(valor: number): string {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-// Progresso até o prêmio e o banner de desconto de meio de ciclo entram no
-// item 7 (junto com o botão de resgate) — aqui o perfil só mostra os pontos
-// como número, sem essa lógica ainda (ver "Ordem de desenvolvimento" na
-// arquitetura: item 6 é perfil/pontos/histórico, item 7 é resgate+desconto).
 export default async function ClientePage(props: PageProps<"/clientes/[id]">) {
   const { id } = await props.params;
 
   const cliente = await buscarClientePorId(id);
   if (!cliente) notFound();
 
-  const compras = await buscarComprasDoCliente(cliente.id);
+  const [compras, config] = await Promise.all([
+    buscarComprasDoCliente(cliente.id),
+    buscarConfiguracaoFidelidade(),
+  ]);
+
+  // Mesma condição descrita na arquitetura ("Desconto na 5ª compra"): só um
+  // dos dois avisos (desconto de meio de ciclo ou prêmio pronto) aparece por
+  // vez, porque pontos < comprasParaPremio já exclui o caso de prêmio.
+  const premioDisponivel = config ? cliente.pontos >= config.comprasParaPremio : false;
+  const descontoDisponivel =
+    config !== null &&
+    !premioDisponivel &&
+    cliente.pontos > 0 &&
+    cliente.pontos % config.comprasParaDesconto === 0;
+  const faltamParaPremio = config ? Math.max(0, config.comprasParaPremio - cliente.pontos) : null;
 
   return (
     <div className="flex flex-col gap-6 max-w-2xl">
@@ -72,6 +85,20 @@ export default async function ClientePage(props: PageProps<"/clientes/[id]">) {
             <span className="block text-xs text-[var(--text-muted)]">última compra</span>
           </div>
         </div>
+
+        {premioDisponivel && config ? (
+          <ResgatarPremioModal
+            clienteId={cliente.id}
+            clienteNome={cliente.nome}
+            descricaoPremio={config.descricaoPremio}
+          />
+        ) : descontoDisponivel && config ? (
+          <DescontoBanner descricao={config.descontoDescricao} />
+        ) : faltamParaPremio !== null ? (
+          <span className="text-xs text-[var(--text-muted)]">
+            Faltam {faltamParaPremio} compra{faltamParaPremio === 1 ? "" : "s"} para o prêmio
+          </span>
+        ) : null}
 
         <span className="text-xs text-[var(--text-muted)]">Cliente desde {formatarData(cliente.criadoEm)}</span>
       </div>

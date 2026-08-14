@@ -279,6 +279,12 @@ export type Database = {
           ultima_compra_em: string
         }[]
       }
+      resgatar_premio: {
+        Args: { p_cliente_id: string }
+        Returns: {
+          pontos: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
