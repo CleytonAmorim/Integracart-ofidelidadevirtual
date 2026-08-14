@@ -1,26 +1,65 @@
 @import "tailwindcss";
 
+/*
+ * Tokens de tema — valores default (paleta da Frio a Frio, cliente piloto)
+ * usados até a página buscar as cores reais do estabelecimento no banco e
+ * sobrescrever via style inline no <body> (ver app/(app)/layout.tsx e
+ * app/(publico)/c/[token]/page.tsx). Gerados a partir de lib/theme/tokens.ts.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #0d0225;
+  --bg-glow-1: rgba(123, 35, 190, 0.3);
+  --bg-glow-2: rgba(255, 212, 4, 0.1);
+  --surface-1: #1d0a42;
+  --surface-2: #2a1259;
+  --brand-primary: #520c89;
+  --brand-primary-2: #7b23be;
+  --brand-accent: #fc6fd3;
+  --brand-accent-2: #ffb8ea;
+  --brand-gold: #ffd400;
+  --brand-gold-2: #ffe873;
+  --border: rgba(252, 111, 211, 0.16);
+  --border-strong: rgba(252, 111, 211, 0.32);
+  --text-primary: #ffffff;
+  --text-secondary: #d3b8e8;
+  --text-muted: #9b82b8;
+  --erro: #ff6b6b;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-bg: var(--bg);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-primary-2: var(--brand-primary-2);
+  --color-brand-accent: var(--brand-accent);
+  --color-brand-accent-2: var(--brand-accent-2);
+  --color-brand-gold: var(--brand-gold);
+  --color-brand-gold-2: var(--brand-gold-2);
+  --color-border-brand: var(--border);
+  --color-border-brand-strong: var(--border-strong);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-erro: var(--erro);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+body {
+  background:
+    radial-gradient(circle at 15% 0%, var(--bg-glow-1), transparent 45%),
+    radial-gradient(circle at 85% 20%, var(--bg-glow-2), transparent 40%),
+    var(--bg);
+  background-attachment: fixed;
+  color: var(--text-primary);
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Cartão translúcido com blur — a unidade visual básica do produto (design
+ * "glassmorphism" aprovado no protótipo). */
+.glass {
+  background: color-mix(in srgb, var(--surface-1) 70%, transparent);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: 18px;
 }

@@ -1,5 +1,8 @@
 /**
  * Tipos do banco escritos à mão a partir de supabase/migrations/0001_init.sql.
+ * O formato (Row/Insert/Update/Relationships por tabela) segue a forma que o
+ * @supabase/supabase-js espera dos genéricos (GenericTable/GenericSchema) —
+ * sem "Relationships" o client não consegue resolver os tipos e cai em `never`.
  *
  * TODO: assim que houver acesso ao Supabase CLI logado neste projeto, trocar
  * por `supabase gen types typescript --project-id qgpnozjaqoykzzmgafgt > types/database.ts`
@@ -27,6 +30,7 @@ export type Database = {
           criado_em?: string;
         };
         Update: Partial<Database["public"]["Tables"]["estabelecimentos"]["Insert"]>;
+        Relationships: [];
       };
       usuarios_estabelecimento: {
         Row: {
@@ -42,6 +46,15 @@ export type Database = {
           criado_em?: string;
         };
         Update: Partial<Database["public"]["Tables"]["usuarios_estabelecimento"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "usuarios_estabelecimento_estabelecimento_id_fkey";
+            columns: ["estabelecimento_id"];
+            isOneToOne: false;
+            referencedRelation: "estabelecimentos";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       clientes: {
         Row: {
@@ -67,6 +80,15 @@ export type Database = {
           criado_em?: string;
         };
         Update: Partial<Database["public"]["Tables"]["clientes"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "clientes_estabelecimento_id_fkey";
+            columns: ["estabelecimento_id"];
+            isOneToOne: false;
+            referencedRelation: "estabelecimentos";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       compras: {
         Row: {
@@ -86,6 +108,22 @@ export type Database = {
           criado_em?: string;
         };
         Update: Partial<Database["public"]["Tables"]["compras"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "compras_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "compras_estabelecimento_id_fkey";
+            columns: ["estabelecimento_id"];
+            isOneToOne: false;
+            referencedRelation: "estabelecimentos";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       configuracao_fidelidade: {
         Row: {
@@ -109,6 +147,15 @@ export type Database = {
           dias_para_inativo?: number;
         };
         Update: Partial<Database["public"]["Tables"]["configuracao_fidelidade"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "configuracao_fidelidade_estabelecimento_id_fkey";
+            columns: ["estabelecimento_id"];
+            isOneToOne: true;
+            referencedRelation: "estabelecimentos";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       resgates: {
         Row: {
@@ -126,6 +173,22 @@ export type Database = {
           criado_em?: string;
         };
         Update: Partial<Database["public"]["Tables"]["resgates"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "resgates_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "resgates_estabelecimento_id_fkey";
+            columns: ["estabelecimento_id"];
+            isOneToOne: false;
+            referencedRelation: "estabelecimentos";
+            referencedColumns: ["id"];
+          },
+        ];
       };
     };
     Views: Record<string, never>;
@@ -151,5 +214,6 @@ export type Database = {
       };
     };
     Enums: Record<string, never>;
+    CompositeTypes: Record<string, never>;
   };
 };
