@@ -2,23 +2,28 @@
 
 import { useRef, useState, useTransition, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { cadastrarCliente } from "@/lib/actions/clientes";
+import { atualizarCliente, cadastrarCliente } from "@/lib/actions/clientes";
+import { useToast } from "@/components/ui/toast";
 import { formataTelefone } from "@/lib/utils/telefone";
 
 type ClienteFormModalProps = {
+  /** "cadastro" (default) cria um cliente novo; "editar" atualiza nome/telefone de um existente. */
+  modo?: "cadastro" | "editar";
+  /** Obrigatório quando modo === "editar". */
+  clienteId?: string;
   /** Texto do botão que abre o modal. */
   textoBotao: string;
-  /** Nome pré-preenchido ao abrir (ex.: quando a busca já indicava um nome). */
+  /** Nome pré-preenchido ao abrir (ex.: quando a busca já indicava um nome, ou os dados atuais no modo editar). */
   nomeInicial?: string;
-  /** Telefone pré-preenchido ao abrir (dígitos), ex.: fluxo "outra pessoa com esse telefone". */
+  /** Telefone pré-preenchido ao abrir (dígitos), ex.: fluxo "outra pessoa com esse telefone" ou os dados atuais no modo editar. */
   telefoneInicial?: string;
-  variante?: "primario" | "secundario";
+  variante?: "primario" | "secundario" | "icone";
 };
 
 /**
- * Modal de cadastro rápido de cliente. Pensado para no futuro (item 6 da
- * ordem de desenvolvimento) ganhar um modo "editar" reaproveitando a mesma
- * estrutura (troca a Server Action e o texto do botão) — por ora só cadastro.
+ * Modal de cadastro rápido de cliente E de edição de dados do cliente (item
+ * 6) — mesmo componente, dois modos, trocando só a Server Action chamada e
+ * o texto/título (ver arquitetura, "componentes/clientes/cliente-form-modal").
  *
  * Chama a Server Action diretamente num handler de submit (em vez de
  * useActionState) para poder fechar o modal e dar refresh() só depois que o
@@ -28,6 +33,8 @@ type ClienteFormModalProps = {
  * como um cheiro de código a evitar.
  */
 export function ClienteFormModal({
+  modo = "cadastro",
+  clienteId,
   textoBotao,
   nomeInicial = "",
   telefoneInicial = "",
@@ -38,6 +45,7 @@ export function ClienteFormModal({
   const [pendente, startTransition] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
+  const { mostrarToast } = useToast();
 
   function aoEnviar(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -45,13 +53,16 @@ export function ClienteFormModal({
     setErro(undefined);
 
     startTransition(async () => {
-      const resultado = await cadastrarCliente({}, formData);
+      const resultado =
+        modo === "editar" ? await atualizarCliente({}, formData) : await cadastrarCliente({}, formData);
+
       if (resultado.sucesso) {
         setAberto(false);
-        formRef.current?.reset();
+        if (modo === "cadastro") formRef.current?.reset();
+        mostrarToast("sucesso", modo === "editar" ? "Dados do cliente atualizados." : "Cliente cadastrado.");
         router.refresh();
       } else {
-        setErro(resultado.erro ?? "Não foi possível cadastrar o cliente.");
+        setErro(resultado.erro ?? "Não foi possível salvar.");
       }
     });
   }
@@ -61,10 +72,13 @@ export function ClienteFormModal({
       <button
         type="button"
         onClick={() => setAberto(true)}
+        title={modo === "editar" ? "Editar dados do cliente" : undefined}
         className={
           variante === "primario"
             ? "rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-            : "rounded-xl px-4 py-2.5 text-sm font-semibold text-[var(--brand-accent)] border border-[var(--border)] transition-colors hover:bg-[var(--surface-2)]"
+            : variante === "icone"
+              ? "w-9 h-9 rounded-lg flex items-center justify-center text-base border border-[var(--border)] text-[var(--brand-accent)] hover:bg-[var(--surface-2)] transition-colors shrink-0"
+              : "rounded-xl px-4 py-2.5 text-sm font-semibold text-[var(--brand-accent)] border border-[var(--border)] transition-colors hover:bg-[var(--surface-2)]"
         }
         style={
           variante === "primario"
@@ -85,7 +99,9 @@ export function ClienteFormModal({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-bold">Cadastrar cliente</h2>
+              <h2 className="text-base font-bold">
+                {modo === "editar" ? "Editar cliente" : "Cadastrar cliente"}
+              </h2>
               <button
                 type="button"
                 onClick={() => setAberto(false)}
@@ -97,6 +113,10 @@ export function ClienteFormModal({
             </div>
 
             <form ref={formRef} onSubmit={aoEnviar} className="flex flex-col gap-4">
+              {modo === "editar" && clienteId ? (
+                <input type="hidden" name="clienteId" value={clienteId} />
+              ) : null}
+
               <div className="flex flex-col gap-1">
                 <label htmlFor="nome" className="text-xs text-[var(--text-secondary)]">
                   Nome
@@ -141,7 +161,13 @@ export function ClienteFormModal({
                   background: "linear-gradient(135deg, var(--brand-primary-2), var(--brand-accent))",
                 }}
               >
-                {pendente ? "Cadastrando..." : "Cadastrar"}
+                {pendente
+                  ? modo === "editar"
+                    ? "Salvando..."
+                    : "Cadastrando..."
+                  : modo === "editar"
+                    ? "Salvar"
+                    : "Cadastrar"}
               </button>
             </form>
           </div>

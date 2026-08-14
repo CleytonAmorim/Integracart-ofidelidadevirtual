@@ -105,3 +105,82 @@ export async function cadastrarCliente(
   revalidatePath("/clientes");
   return { sucesso: true };
 }
+
+export type ClienteDetalhe = {
+  id: string;
+  nome: string;
+  telefone: string;
+  pontos: number;
+  totalGasto: number;
+  ultimaCompraEm: string | null;
+  criadoEm: string;
+};
+
+/**
+ * Busca 1 cliente pelo id, para a página de perfil (/clientes/[id], item 6).
+ * RLS já restringe ao estabelecimento do usuário logado — um id de outro
+ * estabelecimento (ou inexistente) simplesmente não retorna linha nenhuma,
+ * então trata-se igual a "não encontrado" (maybeSingle em vez de single),
+ * sem vazar a diferença entre "não existe" e "não é seu" para o caller.
+ */
+export async function buscarClientePorId(id: string): Promise<ClienteDetalhe | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("clientes")
+    .select("id, nome, telefone, pontos, total_gasto, ultima_compra_em, criado_em")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error || !data) return null;
+
+  return {
+    id: data.id,
+    nome: data.nome,
+    telefone: data.telefone,
+    pontos: data.pontos,
+    totalGasto: Number(data.total_gasto),
+    ultimaCompraEm: data.ultima_compra_em,
+    criadoEm: data.criado_em,
+  };
+}
+
+export type AtualizarClienteState = {
+  erro?: string;
+  sucesso?: boolean;
+};
+
+/**
+ * Edita nome/telefone do cliente — sem restrição de tempo (diferente da
+ * edição/exclusão de compra), ver arquitetura "Editar dados do cliente".
+ * Não passa por RPC: é uma atualização de 1 linha só, sem risco de
+ * condição de corrida como em registrar/editar/excluir compra.
+ */
+export async function atualizarCliente(
+  _prevState: AtualizarClienteState,
+  formData: FormData,
+): Promise<AtualizarClienteState> {
+  const clienteId = String(formData.get("clienteId") ?? "");
+  const nome = String(formData.get("nome") ?? "").trim();
+  const telefone = normalizaTelefone(String(formData.get("telefone") ?? ""));
+
+  if (!clienteId) {
+    return { erro: "Cliente inválido." };
+  }
+  if (!nome) {
+    return { erro: "Informe o nome do cliente." };
+  }
+  if (!telefoneValido(telefone)) {
+    return { erro: "Telefone inválido — informe DDD + número." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("clientes").update({ nome, telefone }).eq("id", clienteId);
+
+  if (error) {
+    return { erro: "Não foi possível salvar as alterações. Tente novamente." };
+  }
+
+  revalidatePath(`/clientes/${clienteId}`);
+  revalidatePath("/clientes");
+  return { sucesso: true };
+}

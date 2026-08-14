@@ -263,7 +263,14 @@ export type Database = {
           pontos: number
         }[]
       }
+      editar_valor_compra: {
+        Args: { p_compra_id: string; p_novo_valor: number }
+        Returns: {
+          total_gasto: number
+        }[]
+      }
       estabelecimento_do_usuario_atual: { Args: never; Returns: string }
+      excluir_compra: { Args: { p_compra_id: string }; Returns: undefined }
       registrar_compra: {
         Args: { p_cliente_id: string; p_valor: number }
         Returns: {
