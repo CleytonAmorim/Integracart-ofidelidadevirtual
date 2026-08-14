@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { buscarEstabelecimentoAtual } from "@/lib/actions/estabelecimento";
 import { normalizaTelefone, telefoneValido } from "@/lib/utils/telefone";
 import { linkWhatsapp, mensagemBoasVindas } from "@/lib/utils/whatsapp";
+import { classificarCliente, type StatusCliente } from "@/lib/utils/classificacao";
 
 export type ClienteResumo = {
   id: string;
@@ -24,10 +25,37 @@ export type ClienteResumo = {
  *
  * Sem termo de busca, devolve os clientes cadastrados mais recentemente
  * (usado para a lista "clientes recentes" abaixo da busca em /clientes).
+ *
+ * `status` (opcional): filtro por classificação (ativo/atenção/inativo),
+ * vindo dos links do dashboard ("Clientes por status", item 11 — antes só
+ * mostrava a contagem, sem dar pra ver quem é quem). Não dá pra filtrar
+ * direto no SQL porque status não é uma coluna — é sempre calculado em
+ * tempo de leitura (ver classificarCliente) — então busca todos os que
+ * batem o texto (sem o limite curto de "recentes") e filtra em JS, mesmo
+ * padrão de buscarDadosDashboard; ok para o volume de 1 estabelecimento
+ * piloto.
  */
-export async function buscarClientes(query: string): Promise<ClienteResumo[]> {
+export async function buscarClientes(query: string, status?: StatusCliente): Promise<ClienteResumo[]> {
   const supabase = await createClient();
   const termo = query.trim();
+
+  const mapCliente = (cliente: {
+    id: string;
+    nome: string;
+    telefone: string;
+    pontos: number;
+    total_gasto: number;
+    ultima_compra_em: string | null;
+    criado_em: string;
+  }): ClienteResumo => ({
+    id: cliente.id,
+    nome: cliente.nome,
+    telefone: cliente.telefone,
+    pontos: cliente.pontos,
+    totalGasto: Number(cliente.total_gasto),
+    ultimaCompraEm: cliente.ultima_compra_em,
+    criadoEm: cliente.criado_em,
+  });
 
   let request = supabase
     .from("clientes")
@@ -43,23 +71,31 @@ export async function buscarClientes(query: string): Promise<ClienteResumo[]> {
     if (digitos.length >= 3) {
       filtros.push(`telefone.ilike.${digitos}%`);
     }
-    request = request.or(filtros.join(",")).order("nome", { ascending: true }).limit(20);
-  } else {
-    request = request.order("criado_em", { ascending: false }).limit(8);
+    request = request.or(filtros.join(","));
   }
+
+  if (status) {
+    const [{ data, error }, { data: config }] = await Promise.all([
+      request.order("nome", { ascending: true }).limit(500),
+      supabase.from("configuracao_fidelidade").select("dias_para_atencao, dias_para_inativo").maybeSingle(),
+    ]);
+    if (error) throw error;
+
+    const diasParaAtencao = config?.dias_para_atencao ?? 30;
+    const diasParaInativo = config?.dias_para_inativo ?? 60;
+    return (data ?? [])
+      .map(mapCliente)
+      .filter((cliente) => classificarCliente(cliente.ultimaCompraEm, diasParaAtencao, diasParaInativo) === status);
+  }
+
+  request = termo
+    ? request.order("nome", { ascending: true }).limit(20)
+    : request.order("criado_em", { ascending: false }).limit(8);
 
   const { data, error } = await request;
   if (error) throw error;
 
-  return (data ?? []).map((cliente) => ({
-    id: cliente.id,
-    nome: cliente.nome,
-    telefone: cliente.telefone,
-    pontos: cliente.pontos,
-    totalGasto: Number(cliente.total_gasto),
-    ultimaCompraEm: cliente.ultima_compra_em,
-    criadoEm: cliente.criado_em,
-  }));
+  return (data ?? []).map(mapCliente);
 }
 
 export type CadastroClienteState = {

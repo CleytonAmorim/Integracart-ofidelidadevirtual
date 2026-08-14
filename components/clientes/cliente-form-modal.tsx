@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition, type FormEvent } from "react";
+import { useEffect, useRef, useState, useTransition, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { atualizarCliente, cadastrarCliente } from "@/lib/actions/clientes";
 import { useToast } from "@/components/ui/toast";
@@ -52,9 +52,35 @@ export function ClienteFormModal({
   const [erro, setErro] = useState<string | undefined>(undefined);
   const [pendente, startTransition] = useTransition();
   const [linkWhatsappPronto, setLinkWhatsappPronto] = useState<string | null>(null);
+  // Trava de toque do passo do WhatsApp — guarda pra QUAL link o destravamento
+  // já rodou, em vez de um boolean simples, pra derivar o estado "travado"
+  // comparando com linkWhatsappPronto no corpo do componente (embaixo), sem
+  // precisar de um efeito resetando estado de volta pra false (o que o lint
+  // do React sinaliza como cheiro de código, com razão — ver useEffect).
+  const [interativoParaLink, setInterativoParaLink] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
   const { mostrarToast } = useToast();
+
+  // O fechar-por-fora desligado (ver onClick do fundo escuro, embaixo) não
+  // foi suficiente: o mesmo clique "fantasma" reenviado pelo navegador em
+  // telas de toque (comentário completo perto do JSX) também podia cair em
+  // cima de um botão de VERDADE do passo do WhatsApp — o "✕" ou até o
+  // "Abrir WhatsApp e enviar" — fechando o modal sozinho ou abrindo o
+  // WhatsApp sem o atendente ter tocado em nada (reportado de novo depois do
+  // primeiro fix). Em vez de adivinhar qual elemento especificamente, a
+  // correção ignora QUALQUER toque nesse passo pelos primeiros ~400ms: um
+  // clique fantasma chega bem antes disso (é o mesmo evento de toque
+  // original, só com o despacho atrasado), enquanto um toque de verdade do
+  // atendente sempre demora mais — ele precisa primeiro ver a tela nova.
+  useEffect(() => {
+    if (!linkWhatsappPronto) return;
+    const link = linkWhatsappPronto;
+    const temporizador = setTimeout(() => setInterativoParaLink(link), 400);
+    return () => clearTimeout(temporizador);
+  }, [linkWhatsappPronto]);
+
+  const passoWhatsappInterativo = linkWhatsappPronto !== null && interativoParaLink === linkWhatsappPronto;
 
   function fechar() {
     setAberto(false);
@@ -153,7 +179,10 @@ export function ClienteFormModal({
               // ver o botão do WhatsApp — daí o fechar-por-fora ficar
               // desligado enquanto esse passo está visível (só fecha por um
               // toque explícito: ✕, "Abrir WhatsApp" ou "Pular por agora").
-              <>
+              // pointerEvents "none" pelos primeiros ~400ms: trava contra
+              // clique fantasma pousando em cima de um desses botões de
+              // verdade (ver useEffect de passoWhatsappInterativo, acima).
+              <div style={{ pointerEvents: passoWhatsappInterativo ? "auto" : "none" }} className="contents">
                 <div className="flex items-center justify-between">
                   <h2 className="text-base font-bold">Cliente cadastrado 🎉</h2>
                   <button
@@ -189,7 +218,7 @@ export function ClienteFormModal({
                 >
                   Pular por agora
                 </button>
-              </>
+              </div>
             ) : (
               <>
                 <div className="flex items-center justify-between">

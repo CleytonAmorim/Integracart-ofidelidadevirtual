@@ -7,5 +7,7 @@ export default async function RootPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  redirect(user ? "/dashboard" : "/login");
+  // /clientes, não /dashboard — mesmo racional do redirect pós-login em
+  // lib/actions/auth.ts (ver comentário lá).
+  redirect(user ? "/clientes" : "/login");
 }

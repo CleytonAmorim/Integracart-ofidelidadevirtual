@@ -53,7 +53,9 @@ export async function updateSession(request: NextRequest) {
 
   if (user && isLogin) {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    // /clientes, não /dashboard — mesmo racional do redirect pós-login em
+    // lib/actions/auth.ts (ver comentário lá).
+    url.pathname = "/clientes";
     return NextResponse.redirect(url);
   }
 

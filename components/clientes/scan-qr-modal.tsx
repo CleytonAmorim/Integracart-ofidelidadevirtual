@@ -8,6 +8,13 @@ import { useToast } from "@/components/ui/toast";
 
 const REGEX_TOKEN_UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
 
+// Fotos de câmera de celular hoje em dia costumam vir enormes (12MP+) — sem
+// redimensionar, o canvas/jsQR ficam pesados demais em aparelhos mais
+// simples (o tipo de celular mais comum num balcão de loja pequena), o que
+// pode fazer a leitura demorar vários segundos ou travar antes de dar
+// qualquer retorno. 1600px no lado maior sobra à vontade para ler um QR.
+const MAIOR_LADO_MAXIMO = 1600;
+
 /**
  * Decodifica o QR a partir de 1 foto (não de um vídeo ao vivo) — a decisão
  * é deliberada: um scanner de vídeo contínuo (getUserMedia + loop de canvas)
@@ -24,14 +31,18 @@ const REGEX_TOKEN_UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-
  */
 async function extrairTokenDaFoto(arquivo: File): Promise<string | null> {
   const bitmap = await createImageBitmap(arquivo);
+  const escala = Math.min(1, MAIOR_LADO_MAXIMO / Math.max(bitmap.width, bitmap.height));
+  const largura = Math.round(bitmap.width * escala);
+  const altura = Math.round(bitmap.height * escala);
+
   const canvas = document.createElement("canvas");
-  canvas.width = bitmap.width;
-  canvas.height = bitmap.height;
+  canvas.width = largura;
+  canvas.height = altura;
   const contexto = canvas.getContext("2d");
   if (!contexto) return null;
 
-  contexto.drawImage(bitmap, 0, 0);
-  const imageData = contexto.getImageData(0, 0, canvas.width, canvas.height);
+  contexto.drawImage(bitmap, 0, 0, largura, altura);
+  const imageData = contexto.getImageData(0, 0, largura, altura);
   const resultado = jsQR(imageData.data, imageData.width, imageData.height);
   if (!resultado) return null;
 
@@ -64,21 +75,32 @@ export function ScanQrModal() {
 
     setErro(undefined);
     startTransition(async () => {
-      const token = await extrairTokenDaFoto(arquivo);
-      if (!token) {
-        setErro("Não encontramos um QR válido nessa foto. Tire de novo, com o QR bem enquadrado.");
-        return;
-      }
+      // Sem o try/catch, qualquer coisa que desse errado aqui (foto num
+      // formato que o createImageBitmap não decodifica, uma falha na Server
+      // Action de rede) derrubava a Promise sem passar por nenhum dos
+      // `setErro` abaixo — a câmera abria, o atendente tirava a foto, e a
+      // tela simplesmente voltava ao normal sem explicação nenhuma
+      // (reportado como "só fica abrindo a câmera"). Agora qualquer falha
+      // sempre vira uma mensagem, em vez de silêncio.
+      try {
+        const token = await extrairTokenDaFoto(arquivo);
+        if (!token) {
+          setErro("Não encontramos um QR válido nessa foto. Tire de novo, com o QR bem enquadrado.");
+          return;
+        }
 
-      const cliente = await buscarClientePorToken(token);
-      if (!cliente) {
-        setErro("QR não reconhecido — não encontramos esse cliente.");
-        return;
-      }
+        const cliente = await buscarClientePorToken(token);
+        if (!cliente) {
+          setErro("QR não reconhecido — não encontramos esse cliente.");
+          return;
+        }
 
-      mostrarToast("sucesso", `${cliente.nome} identificado.`);
-      setAberto(false);
-      router.push(`/clientes/${cliente.id}`);
+        mostrarToast("sucesso", `${cliente.nome} identificado.`);
+        setAberto(false);
+        router.push(`/clientes/${cliente.id}`);
+      } catch {
+        setErro("Não foi possível ler essa foto. Tente tirar o QR de novo, com boa luz e bem enquadrado.");
+      }
     });
   }
 

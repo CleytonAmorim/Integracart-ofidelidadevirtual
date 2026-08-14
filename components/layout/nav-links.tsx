@@ -11,9 +11,13 @@ type NavItem = {
   icone: string;
 };
 
+// Clientes primeiro (não Dashboard): é a tela de entrada do painel — login
+// e "/" redirecionam direto pra cá (ver lib/actions/auth.ts e app/page.tsx),
+// por ser o dia a dia do atendente — então também é a 1ª aba, à esquerda,
+// na posição que normalmente seria a de "início".
 const ITENS: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", labelAbas: "Início", icone: "▣" },
   { href: "/clientes", label: "Clientes", labelAbas: "Clientes", icone: "☰" },
+  { href: "/dashboard", label: "Dashboard", labelAbas: "Dashboard", icone: "▣" },
   { href: "/configuracoes", label: "Configurações", labelAbas: "Ajustes", icone: "⚙" },
 ];
 

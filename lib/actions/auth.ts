@@ -22,7 +22,10 @@ export async function login(_prevState: LoginState, formData: FormData): Promise
     return { erro: "E-mail ou senha incorretos." };
   }
 
-  redirect("/dashboard");
+  // /clientes, não /dashboard — é a tela principal do dia a dia do atendente
+  // (ver arquitetura), por pedido explícito do usuário para o painel abrir
+  // direto nela.
+  redirect("/clientes");
 }
 
 export async function logout() {
