@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -15,6 +15,16 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Cartão Fidelidade Digital",
   description: "Fidelidade e CRM para pequenos negócios locais",
+};
+
+// viewportFit: "cover" — sem isso, env(safe-area-inset-bottom) (usado nas
+// abas fixas do rodapé do painel, ver components/layout/nav-links.tsx) fica
+// travado em 0 no Safari/iOS, e o conteúdo por trás do indicador de início
+// do iPhone fica sem a folga extra que deveria ter.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

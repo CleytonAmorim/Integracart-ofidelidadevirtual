@@ -40,7 +40,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     <ToastContext.Provider value={{ mostrarToast }}>
       {children}
 
-      <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 items-end pointer-events-none">
+      {/* bottom-20 no celular: acima das abas fixas do rodapé do painel (ver
+          components/layout/nav-links.tsx) — em telas sem essas abas (login,
+          página pública) o offset a mais é só uma folga visual, sem problema. */}
+      <div className="fixed bottom-20 md:bottom-4 right-4 z-[100] flex flex-col gap-2 items-end pointer-events-none">
         {toasts.map((toast) => (
           <div
             key={toast.id}
