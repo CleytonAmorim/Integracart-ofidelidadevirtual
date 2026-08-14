@@ -1,3 +1,77 @@
-export default function ClientesPage() {
-  return <div>Clientes</div>;
+import { buscarClientes } from "@/lib/actions/clientes";
+import { ClienteSearch } from "@/components/clientes/cliente-search";
+import { ClienteCard } from "@/components/clientes/cliente-card";
+import { ClienteFormModal } from "@/components/clientes/cliente-form-modal";
+import { normalizaTelefone } from "@/lib/utils/telefone";
+
+export default async function ClientesPage(props: PageProps<"/clientes">) {
+  const params = await props.searchParams;
+  const qBruto = params.q;
+  const q = (Array.isArray(qBruto) ? qBruto[0] : qBruto) ?? "";
+
+  const clientes = await buscarClientes(q);
+  const buscando = q.trim().length > 0;
+  const digitosQuery = normalizaTelefone(q);
+  // Um termo com 8+ dígitos foi digitado como telefone (não como nome) —
+  // é o caso em que o botão "+ cadastrar outra pessoa com esse telefone"
+  // (ver arquitetura, caso do Pedro/Maria com o mesmo número) faz sentido.
+  const buscaEhTelefone = digitosQuery.length >= 8;
+
+  return (
+    <div className="flex flex-col gap-6 max-w-2xl">
+      <div>
+        <h1 className="text-xl font-bold">Clientes</h1>
+        <p className="text-sm text-[var(--text-muted)]">
+          Busque por nome ou telefone para identificar o cliente, ou cadastre um novo.
+        </p>
+      </div>
+
+      <ClienteSearch valorInicial={q} />
+
+      {buscando && clientes.length > 1 ? (
+        <p className="text-sm text-[var(--brand-accent)]">
+          {clientes.length} clientes encontrados — confirme o nome antes de registrar a compra.
+        </p>
+      ) : null}
+
+      {!buscando ? (
+        <p className="text-xs text-[var(--text-muted)] -mb-2">Clientes cadastrados recentemente</p>
+      ) : null}
+
+      <div className="flex flex-col gap-3">
+        {clientes.map((cliente) => (
+          <ClienteCard key={cliente.id} cliente={cliente} />
+        ))}
+
+        {buscando && clientes.length === 0 ? (
+          <div className="glass p-6 text-center flex flex-col gap-3 items-center">
+            <p className="text-sm text-[var(--text-secondary)]">
+              Nenhum cliente encontrado para “{q}”.
+            </p>
+            <ClienteFormModal
+              textoBotao="Cadastrar novo cliente"
+              nomeInicial={buscaEhTelefone ? "" : q}
+              telefoneInicial={buscaEhTelefone ? digitosQuery : ""}
+            />
+          </div>
+        ) : null}
+
+        {!buscando && clientes.length === 0 ? (
+          <p className="text-sm text-[var(--text-muted)]">Nenhum cliente cadastrado ainda.</p>
+        ) : null}
+      </div>
+
+      <div>
+        <ClienteFormModal
+          textoBotao={
+            buscaEhTelefone
+              ? "+ Cadastrar outra pessoa com esse telefone"
+              : "+ Cadastrar novo cliente"
+          }
+          telefoneInicial={buscaEhTelefone ? digitosQuery : ""}
+          variante="secundario"
+        />
+      </div>
+    </div>
+  );
 }
