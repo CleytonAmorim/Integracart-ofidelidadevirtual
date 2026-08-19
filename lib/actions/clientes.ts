@@ -152,19 +152,32 @@ export async function cadastrarCliente(
     return { erro: "Não foi possível cadastrar o cliente. Tente novamente." };
   }
 
-  revalidatePath("/clientes");
-
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
   if (!siteUrl) {
     // Ainda não implantado (deploy na Vercel adiado por decisão do usuário,
     // ver arquitetura) — sem domínio público não tem como montar um link
     // que funcione, então o cadastro segue normal, só sem o passo de WhatsApp.
+    // Sem passo extra depois disso — revalida aqui mesmo, igual antes.
+    revalidatePath("/clientes");
     return { sucesso: true };
   }
 
   const linkPublico = `${siteUrl.replace(/\/$/, "")}/c/${data.token_publico}`;
   const mensagem = mensagemBoasVindas(nome, estabelecimento.nome, linkPublico);
 
+  // Verdadeira causa do passo do WhatsApp sumindo sozinho (as duas correções
+  // anteriores miraram um clique fantasma que não era o problema real): um
+  // `revalidatePath("/clientes")` chamado AQUI, antes de devolver o link,
+  // marcava a página como desatualizada imediatamente — o Next.js já refaz
+  // o /clientes (Server Component) na hora, o que pode desmontar o próprio
+  // ClienteFormModal em que esse passo está (ex.: o card de "nenhum cliente
+  // encontrado" que o envolve some assim que o cadastro novo passa a bater
+  // com a busca ativa) antes do atendente sequer ver a tela. Não é clique
+  // nenhum — é o componente sendo desmontado por baixo dos pés dele. Por
+  // isso a revalidação NÃO acontece aqui quando existe um passo de WhatsApp
+  // pela frente: ClienteFormModal já chama router.refresh() sozinho, no
+  // momento certo (finalizarCadastro), só quando o atendente de fato
+  // dispensa esse passo (✕, "Abrir WhatsApp" ou "Pular por agora").
   return { sucesso: true, linkWhatsapp: linkWhatsapp(telefone, mensagem) };
 }
 
