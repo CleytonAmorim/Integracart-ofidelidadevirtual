@@ -45,18 +45,29 @@ export async function updateSession(request: NextRequest) {
   const isRotaProtegida = path.startsWith("/dashboard") || path.startsWith("/clientes") || path.startsWith("/configuracoes");
   const isLogin = path.startsWith("/login");
 
-  if (!user && isRotaProtegida) {
+  // Redirects criam uma resposta nova — sem copiar os cookies escritos acima
+  // em supabaseResponse, o refresh de token dessa request se perde (o
+  // navegador nunca recebe o token renovado), o que deixa a sessão
+  // inconsistente entre requests e pode gerar loop de redirecionamento
+  // /login <-> /clientes.
+  function redirectPreservandoSessao(pathname: string) {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
+    url.pathname = pathname;
+    const redirectResponse = NextResponse.redirect(url);
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie);
+    });
+    return redirectResponse;
+  }
+
+  if (!user && isRotaProtegida) {
+    return redirectPreservandoSessao("/login");
   }
 
   if (user && isLogin) {
-    const url = request.nextUrl.clone();
     // /clientes, não /dashboard — mesmo racional do redirect pós-login em
     // lib/actions/auth.ts (ver comentário lá).
-    url.pathname = "/clientes";
-    return NextResponse.redirect(url);
+    return redirectPreservandoSessao("/clientes");
   }
 
   return supabaseResponse;
