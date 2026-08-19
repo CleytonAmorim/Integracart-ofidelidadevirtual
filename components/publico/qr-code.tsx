@@ -8,7 +8,7 @@ import QRious from "qrious";
  * elemento canvas real do DOM, não dá pra gerar isso num Server Component).
  * Sem tipos próprios publicados pelo pacote — ver types/qrious.d.ts.
  */
-export function QrCode({ valor, tamanho = 180 }: { valor: string; tamanho?: number }) {
+export function QrCode({ valor, tamanho = 260 }: { valor: string; tamanho?: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -19,7 +19,12 @@ export function QrCode({ valor, tamanho = 180 }: { valor: string; tamanho?: numb
       size: tamanho,
       background: "#FFFFFF",
       foreground: "#000000",
-      level: "M",
+      // "H" (máxima correção de erro) em vez de "M" — o valor codificado é a
+      // URL pública completa (~85 caracteres, bem mais denso que só o token),
+      // e este QR é fotografado de tela pra tela por outro celular (reflexo,
+      // foco, distância) em vez de impresso/escaneado de perto — precisa de
+      // mais tolerância a ruído do que o padrão.
+      level: "H",
     });
   }, [valor, tamanho]);
 

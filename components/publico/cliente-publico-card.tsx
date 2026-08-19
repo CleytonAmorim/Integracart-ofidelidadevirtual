@@ -81,7 +81,7 @@ export function ClientePublicoCard({
       {descontoDisponivel ? <DescontoBanner descricao={descontoDescricao} /> : null}
 
       <div className="flex flex-col items-center gap-2 pt-2">
-        <QrCode valor={urlPublica} tamanho={180} />
+        <QrCode valor={urlPublica} tamanho={260} />
         <span className="text-xs text-[var(--text-muted)]">Mostre este QR no balcão na próxima compra</span>
       </div>
     </div>
