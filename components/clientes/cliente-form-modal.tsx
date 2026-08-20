@@ -17,6 +17,8 @@ type ClienteFormModalProps = {
   nomeInicial?: string;
   /** Telefone pré-preenchido ao abrir (dígitos), ex.: fluxo "outra pessoa com esse telefone" ou os dados atuais no modo editar. */
   telefoneInicial?: string;
+  /** Data de nascimento pré-preenchida ("YYYY-MM-DD"), só usado no modo editar. */
+  dataNascimentoInicial?: string | null;
   variante?: "primario" | "secundario" | "icone";
 };
 
@@ -46,6 +48,7 @@ export function ClienteFormModal({
   textoBotao,
   nomeInicial = "",
   telefoneInicial = "",
+  dataNascimentoInicial = "",
   variante = "primario",
 }: ClienteFormModalProps) {
   const [aberto, setAberto] = useState(false);
@@ -266,6 +269,19 @@ export function ClienteFormModal({
                       required
                       defaultValue={telefoneInicial ? formataTelefone(telefoneInicial) : ""}
                       placeholder="(31) 91234-5678"
+                      className="rounded-xl px-4 py-3 bg-[var(--surface-2)] border border-[var(--border)] text-[var(--text-primary)] outline-none focus:border-[var(--brand-accent)] transition-colors"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label htmlFor="dataNascimento" className="text-xs text-[var(--text-secondary)]">
+                      Data de nascimento (opcional)
+                    </label>
+                    <input
+                      id="dataNascimento"
+                      name="dataNascimento"
+                      type="date"
+                      defaultValue={dataNascimentoInicial ?? ""}
                       className="rounded-xl px-4 py-3 bg-[var(--surface-2)] border border-[var(--border)] text-[var(--text-primary)] outline-none focus:border-[var(--brand-accent)] transition-colors"
                     />
                   </div>

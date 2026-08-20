@@ -17,3 +17,13 @@ export function mensagemBoasVindas(nomeCliente: string, nomeEstabelecimento: str
   const primeiroNome = nomeCliente.trim().split(" ")[0];
   return `Oi, ${primeiroNome}! Seu cartão fidelidade da ${nomeEstabelecimento} está pronto 🎉\n\nAcompanhe seus pontos e mostre seu QR no balcão na próxima compra:\n${linkPublico}`;
 }
+
+/**
+ * Preenche o template de mensagem configurado em /configuracoes
+ * (mensagem_atencao/mensagem_inativo) com o primeiro nome do cliente —
+ * único placeholder suportado por enquanto, `{nome}`.
+ */
+export function preencherTemplateMensagem(template: string, nomeCliente: string): string {
+  const primeiroNome = nomeCliente.trim().split(" ")[0];
+  return template.replaceAll("{nome}", primeiroNome);
+}

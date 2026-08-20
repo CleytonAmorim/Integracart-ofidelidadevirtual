@@ -36,6 +36,33 @@ function Campo({ id, name, label, ajuda, defaultValue, type = "text" }: CampoPro
   );
 }
 
+type CampoTextareaProps = {
+  id: string;
+  name: string;
+  label: string;
+  ajuda?: string;
+  defaultValue: string;
+};
+
+function CampoTextarea({ id, name, label, ajuda, defaultValue }: CampoTextareaProps) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label htmlFor={id} className="text-xs text-[var(--text-secondary)]">
+        {label}
+      </label>
+      <textarea
+        id={id}
+        name={name}
+        required
+        rows={3}
+        defaultValue={defaultValue}
+        className="rounded-xl px-4 py-3 bg-[var(--surface-2)] border border-[var(--border)] text-[var(--text-primary)] outline-none focus:border-[var(--brand-accent)] transition-colors resize-y"
+      />
+      {ajuda ? <span className="text-xs text-[var(--text-muted)]">{ajuda}</span> : null}
+    </div>
+  );
+}
+
 /**
  * Formulário de /configuracoes — mesma convenção de useTransition + submit
  * manual dos outros formulários do app (ver ClienteFormModal para o racional
@@ -129,6 +156,26 @@ export function ConfiguracaoForm({ config }: { config: ConfiguracaoFidelidade })
           ajuda={'Precisa ser maior que o limite de "Atenção".'}
           defaultValue={config.diasParaInativo}
           type="number"
+        />
+      </div>
+
+      <div className="flex flex-col gap-4 pt-2 border-t border-[var(--border)]">
+        <h2 className="text-sm font-semibold text-[var(--text-secondary)]">Mensagens de reengajamento (WhatsApp)</h2>
+        <p className="text-xs text-[var(--text-muted)] -mt-2">
+          {'Aparecem como botão pronto no perfil do cliente quando ele está "Atenção" ou "Inativo". Use '}
+          <code className="text-[var(--text-secondary)]">{"{nome}"}</code> onde quiser o primeiro nome do cliente.
+        </p>
+        <CampoTextarea
+          id="mensagemAtencao"
+          name="mensagemAtencao"
+          label={'Mensagem para "Atenção"'}
+          defaultValue={config.mensagemAtencao}
+        />
+        <CampoTextarea
+          id="mensagemInativo"
+          name="mensagemInativo"
+          label={'Mensagem para "Inativo"'}
+          defaultValue={config.mensagemInativo}
         />
       </div>
 

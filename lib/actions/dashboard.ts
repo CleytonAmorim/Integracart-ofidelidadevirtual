@@ -11,6 +11,12 @@ export type CompraRecente = {
   criadoEm: string;
 };
 
+export type Aniversariante = {
+  id: string;
+  nome: string;
+  dia: number;
+};
+
 export type DashboardDados = {
   totalClientes: number;
   pontosEmAberto: number;
@@ -18,6 +24,7 @@ export type DashboardDados = {
   comprasHoje: number;
   porStatus: Record<StatusCliente, number>;
   comprasRecentes: CompraRecente[];
+  aniversariantesMes: Aniversariante[];
 };
 
 /**
@@ -35,7 +42,7 @@ export async function buscarDadosDashboard(): Promise<DashboardDados | null> {
   const supabase = await createClient();
 
   const [{ data: clientes, error: erroClientes }, { data: config }] = await Promise.all([
-    supabase.from("clientes").select("pontos, total_gasto, ultima_compra_em"),
+    supabase.from("clientes").select("id, nome, pontos, total_gasto, ultima_compra_em, data_nascimento"),
     supabase
       .from("configuracao_fidelidade")
       .select("dias_para_atencao, dias_para_inativo")
@@ -51,12 +58,30 @@ export async function buscarDadosDashboard(): Promise<DashboardDados | null> {
   let pontosEmAberto = 0;
   let totalGastoAcumulado = 0;
 
+  // Mês atual no fuso America/Sao_Paulo, mesmo racional do "hoje" mais abaixo
+  // — evita o mês virar errado pra quem está perto da meia-noite/virada de mês.
+  const mesAtual = Number(
+    new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", month: "numeric" }).format(new Date()),
+  );
+  const aniversariantesMes: Aniversariante[] = [];
+
   for (const cliente of clientes) {
     pontosEmAberto += cliente.pontos;
     totalGastoAcumulado += Number(cliente.total_gasto);
     const status = classificarCliente(cliente.ultima_compra_em, diasParaAtencao, diasParaInativo);
     porStatus[status] += 1;
+
+    if (cliente.data_nascimento) {
+      // data_nascimento vem "YYYY-MM-DD" — parse direto da string (sem
+      // `new Date(...)`) pra não sofrer o deslocamento de fuso horário que
+      // interpretaria a data como meia-noite UTC.
+      const [, mes, dia] = cliente.data_nascimento.split("-").map(Number);
+      if (mes === mesAtual) {
+        aniversariantesMes.push({ id: cliente.id, nome: cliente.nome, dia });
+      }
+    }
   }
+  aniversariantesMes.sort((a, b) => a.dia - b.dia);
 
   // "Hoje" no fuso America/Sao_Paulo, mesma lógica de ehHoje() — filtrar por
   // uma data (não um intervalo de timestamp) evita erro de fuso na virada
@@ -102,5 +127,6 @@ export async function buscarDadosDashboard(): Promise<DashboardDados | null> {
     comprasHoje: comprasHoje ?? 0,
     porStatus,
     comprasRecentes,
+    aniversariantesMes,
   };
 }

@@ -10,6 +10,9 @@ import { HistoricoCompras } from "@/components/compras/historico-compras";
 import { ResgatarPremioModal } from "@/components/fidelidade/resgatar-premio-modal";
 import { DescontoBanner } from "@/components/fidelidade/desconto-banner";
 import { StatusBadge } from "@/components/clientes/status-badge";
+import { ExcluirClienteBotao } from "@/components/clientes/excluir-cliente-botao";
+import { EnviarMensagemBotao } from "@/components/clientes/enviar-mensagem-botao";
+import { classificarCliente } from "@/lib/utils/classificacao";
 
 function formatarData(iso: string): string {
   return new Date(iso).toLocaleDateString("pt-BR");
@@ -41,6 +44,12 @@ export default async function ClientePage(props: PageProps<"/clientes/[id]">) {
     cliente.pontos % config.comprasParaDesconto === 0;
   const faltamParaPremio = config ? Math.max(0, config.comprasParaPremio - cliente.pontos) : null;
 
+  const status = config
+    ? classificarCliente(cliente.ultimaCompraEm, config.diasParaAtencao, config.diasParaInativo)
+    : null;
+  const templateMensagem =
+    status === "atencao" ? config?.mensagemAtencao : status === "inativo" ? config?.mensagemInativo : undefined;
+
   return (
     <div className="flex flex-col gap-6 max-w-2xl">
       <Link
@@ -61,6 +70,7 @@ export default async function ClientePage(props: PageProps<"/clientes/[id]">) {
                 textoBotao="✎"
                 nomeInicial={cliente.nome}
                 telefoneInicial={cliente.telefone}
+                dataNascimentoInicial={cliente.dataNascimento}
                 variante="icone"
               />
               {config ? (
@@ -70,6 +80,7 @@ export default async function ClientePage(props: PageProps<"/clientes/[id]">) {
                   diasParaInativo={config.diasParaInativo}
                 />
               ) : null}
+              <ExcluirClienteBotao clienteId={cliente.id} clienteNome={cliente.nome} />
             </div>
             <span className="text-sm text-[var(--text-muted)]">{formataTelefone(cliente.telefone)}</span>
           </div>
@@ -93,6 +104,14 @@ export default async function ClientePage(props: PageProps<"/clientes/[id]">) {
             <span className="block text-xs text-[var(--text-muted)]">última compra</span>
           </div>
         </div>
+
+        {templateMensagem ? (
+          <EnviarMensagemBotao
+            clienteNome={cliente.nome}
+            telefone={cliente.telefone}
+            template={templateMensagem}
+          />
+        ) : null}
 
         {premioDisponivel && config ? (
           <ResgatarPremioModal

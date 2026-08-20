@@ -21,9 +21,108 @@ export type Database = {
   }
   public: {
     Tables: {
+      canva_clients: {
+        Row: {
+          canva_brand_kit_id: string | null
+          canva_refresh_token: string | null
+          created_at: string
+          id: string
+          login_email: string
+          logo_variants: Json
+          name: string
+          palette: string | null
+          password_hash: string
+          pillar_templates: Json
+          tone_keywords: string | null
+          typography_style: string | null
+        }
+        Insert: {
+          canva_brand_kit_id?: string | null
+          canva_refresh_token?: string | null
+          created_at?: string
+          id?: string
+          login_email: string
+          logo_variants?: Json
+          name: string
+          palette?: string | null
+          password_hash: string
+          pillar_templates?: Json
+          tone_keywords?: string | null
+          typography_style?: string | null
+        }
+        Update: {
+          canva_brand_kit_id?: string | null
+          canva_refresh_token?: string | null
+          created_at?: string
+          id?: string
+          login_email?: string
+          logo_variants?: Json
+          name?: string
+          palette?: string | null
+          password_hash?: string
+          pillar_templates?: Json
+          tone_keywords?: string | null
+          typography_style?: string | null
+        }
+        Relationships: []
+      }
+      canva_jobs: {
+        Row: {
+          canva_design_id: string | null
+          canva_template_id: string | null
+          client_id: string
+          created_at: string
+          edit_url: string | null
+          enhanced_output: Json | null
+          export_url: string | null
+          id: string
+          mode: string | null
+          qa_history: Json
+          raw_request: string
+          status: string
+        }
+        Insert: {
+          canva_design_id?: string | null
+          canva_template_id?: string | null
+          client_id: string
+          created_at?: string
+          edit_url?: string | null
+          enhanced_output?: Json | null
+          export_url?: string | null
+          id?: string
+          mode?: string | null
+          qa_history?: Json
+          raw_request: string
+          status?: string
+        }
+        Update: {
+          canva_design_id?: string | null
+          canva_template_id?: string | null
+          client_id?: string
+          created_at?: string
+          edit_url?: string | null
+          enhanced_output?: Json | null
+          export_url?: string | null
+          id?: string
+          mode?: string | null
+          qa_history?: Json
+          raw_request?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "canva_jobs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "canva_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clientes: {
         Row: {
           criado_em: string
+          data_nascimento: string | null
           estabelecimento_id: string
           id: string
           nome: string
@@ -35,6 +134,7 @@ export type Database = {
         }
         Insert: {
           criado_em?: string
+          data_nascimento?: string | null
           estabelecimento_id: string
           id?: string
           nome: string
@@ -46,6 +146,7 @@ export type Database = {
         }
         Update: {
           criado_em?: string
+          data_nascimento?: string | null
           estabelecimento_id?: string
           id?: string
           nome?: string
@@ -116,6 +217,8 @@ export type Database = {
           dias_para_atencao: number
           dias_para_inativo: number
           estabelecimento_id: string
+          mensagem_atencao: string
+          mensagem_inativo: string
           pontos_por_compra: number
         }
         Insert: {
@@ -126,6 +229,8 @@ export type Database = {
           dias_para_atencao?: number
           dias_para_inativo?: number
           estabelecimento_id: string
+          mensagem_atencao?: string
+          mensagem_inativo?: string
           pontos_por_compra?: number
         }
         Update: {
@@ -136,6 +241,8 @@ export type Database = {
           dias_para_atencao?: number
           dias_para_inativo?: number
           estabelecimento_id?: string
+          mensagem_atencao?: string
+          mensagem_inativo?: string
           pontos_por_compra?: number
         }
         Relationships: [

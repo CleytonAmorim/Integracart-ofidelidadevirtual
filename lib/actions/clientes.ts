@@ -124,6 +124,9 @@ export async function cadastrarCliente(
 ): Promise<CadastroClienteState> {
   const nome = String(formData.get("nome") ?? "").trim();
   const telefone = normalizaTelefone(String(formData.get("telefone") ?? ""));
+  // Opcional — não entra na validação abaixo. String vazia vira null (não ""),
+  // que o Postgres rejeitaria por não ser uma data válida.
+  const dataNascimento = String(formData.get("dataNascimento") ?? "").trim() || null;
 
   if (!nome) {
     return { erro: "Informe o nome do cliente." };
@@ -144,6 +147,7 @@ export async function cadastrarCliente(
       estabelecimento_id: estabelecimento.id,
       nome,
       telefone,
+      data_nascimento: dataNascimento,
     })
     .select("token_publico")
     .single();
@@ -189,6 +193,7 @@ export type ClienteDetalhe = {
   totalGasto: number;
   ultimaCompraEm: string | null;
   criadoEm: string;
+  dataNascimento: string | null;
 };
 
 /**
@@ -202,7 +207,7 @@ export async function buscarClientePorId(id: string): Promise<ClienteDetalhe | n
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("clientes")
-    .select("id, nome, telefone, pontos, total_gasto, ultima_compra_em, criado_em")
+    .select("id, nome, telefone, pontos, total_gasto, ultima_compra_em, criado_em, data_nascimento")
     .eq("id", id)
     .maybeSingle();
 
@@ -216,6 +221,7 @@ export async function buscarClientePorId(id: string): Promise<ClienteDetalhe | n
     totalGasto: Number(data.total_gasto),
     ultimaCompraEm: data.ultima_compra_em,
     criadoEm: data.criado_em,
+    dataNascimento: data.data_nascimento,
   };
 }
 
@@ -237,6 +243,7 @@ export async function atualizarCliente(
   const clienteId = String(formData.get("clienteId") ?? "");
   const nome = String(formData.get("nome") ?? "").trim();
   const telefone = normalizaTelefone(String(formData.get("telefone") ?? ""));
+  const dataNascimento = String(formData.get("dataNascimento") ?? "").trim() || null;
 
   if (!clienteId) {
     return { erro: "Cliente inválido." };
@@ -249,7 +256,10 @@ export async function atualizarCliente(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.from("clientes").update({ nome, telefone }).eq("id", clienteId);
+  const { error } = await supabase
+    .from("clientes")
+    .update({ nome, telefone, data_nascimento: dataNascimento })
+    .eq("id", clienteId);
 
   if (error) {
     return { erro: "Não foi possível salvar as alterações. Tente novamente." };
@@ -258,6 +268,24 @@ export async function atualizarCliente(
   revalidatePath(`/clientes/${clienteId}`);
   revalidatePath("/clientes");
   return { sucesso: true };
+}
+
+/**
+ * Exclui o cliente (e, em cascata no banco, suas compras e resgates — ver
+ * FKs `on delete cascade` de `compras.cliente_id`/`resgates.cliente_id`).
+ * Sem confirmação aqui: a tela (components/clientes/excluir-cliente-botao.tsx)
+ * já exige confirmação explícita antes de chamar isto, por ser irreversível.
+ */
+export async function excluirCliente(clienteId: string): Promise<{ erro?: string }> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("clientes").delete().eq("id", clienteId);
+
+  if (error) {
+    return { erro: "Não foi possível excluir o cliente. Tente novamente." };
+  }
+
+  revalidatePath("/clientes");
+  return {};
 }
 
 /**

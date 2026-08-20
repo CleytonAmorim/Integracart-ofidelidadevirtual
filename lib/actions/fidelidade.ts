@@ -12,6 +12,8 @@ export type ConfiguracaoFidelidade = {
   descontoDescricao: string;
   diasParaAtencao: number;
   diasParaInativo: number;
+  mensagemAtencao: string;
+  mensagemInativo: string;
 };
 
 /**
@@ -28,7 +30,7 @@ export async function buscarConfiguracaoFidelidade(): Promise<ConfiguracaoFideli
   const { data, error } = await supabase
     .from("configuracao_fidelidade")
     .select(
-      "pontos_por_compra, compras_para_premio, descricao_premio, compras_para_desconto, desconto_descricao, dias_para_atencao, dias_para_inativo",
+      "pontos_por_compra, compras_para_premio, descricao_premio, compras_para_desconto, desconto_descricao, dias_para_atencao, dias_para_inativo, mensagem_atencao, mensagem_inativo",
     )
     .maybeSingle();
 
@@ -42,6 +44,8 @@ export async function buscarConfiguracaoFidelidade(): Promise<ConfiguracaoFideli
     descontoDescricao: data.desconto_descricao,
     diasParaAtencao: data.dias_para_atencao,
     diasParaInativo: data.dias_para_inativo,
+    mensagemAtencao: data.mensagem_atencao,
+    mensagemInativo: data.mensagem_inativo,
   };
 }
 
@@ -76,6 +80,8 @@ export async function atualizarConfiguracaoFidelidade(
   const descontoDescricao = String(formData.get("descontoDescricao") ?? "").trim();
   const diasParaAtencao = Number(formData.get("diasParaAtencao"));
   const diasParaInativo = Number(formData.get("diasParaInativo"));
+  const mensagemAtencao = String(formData.get("mensagemAtencao") ?? "").trim();
+  const mensagemInativo = String(formData.get("mensagemInativo") ?? "").trim();
 
   const camposInteiroPositivo = [
     pontosPorCompra,
@@ -99,6 +105,9 @@ export async function atualizarConfiguracaoFidelidade(
   if (diasParaInativo <= diasParaAtencao) {
     return { erro: "\"Dias para inativo\" precisa ser maior que \"dias para atenção\"." };
   }
+  if (!mensagemAtencao || !mensagemInativo) {
+    return { erro: "Preencha as duas mensagens de WhatsApp." };
+  }
 
   const supabase = await createClient();
   const { error } = await supabase
@@ -111,6 +120,8 @@ export async function atualizarConfiguracaoFidelidade(
       desconto_descricao: descontoDescricao,
       dias_para_atencao: diasParaAtencao,
       dias_para_inativo: diasParaInativo,
+      mensagem_atencao: mensagemAtencao,
+      mensagem_inativo: mensagemInativo,
     })
     .eq("estabelecimento_id", estabelecimento.id);
 
