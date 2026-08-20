@@ -1,12 +1,24 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { login, type LoginState } from "@/lib/actions/auth";
 
 const estadoInicial: LoginState = {};
 
 export function LoginForm() {
   const [state, formAction, pendente] = useActionState(login, estadoInicial);
+
+  useEffect(() => {
+    if (state?.sucesso) {
+      // Navegação completa (não client-side/RSC) — só dispara depois que a
+      // resposta da action, com o cookie de sessão novo, já chegou ao
+      // navegador (ver comentário em lib/actions/auth.ts). Deliberadamente
+      // não usa router.push()/redirect() aqui — é exatamente a navegação
+      // client-side deles que causava o bug.
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+      window.location.href = "/clientes";
+    }
+  }, [state?.sucesso]);
 
   return (
     <form action={formAction} className="glass w-full max-w-sm p-8 flex flex-col gap-4">
@@ -59,13 +71,13 @@ export function LoginForm() {
 
       <button
         type="submit"
-        disabled={pendente}
+        disabled={pendente || state?.sucesso}
         className="mt-2 rounded-xl px-4 py-3 font-semibold text-white disabled:opacity-60 transition-opacity"
         style={{
           background: "linear-gradient(135deg, var(--brand-primary-2), var(--brand-accent))",
         }}
       >
-        {pendente ? "Entrando..." : "Entrar"}
+        {pendente || state?.sucesso ? "Entrando..." : "Entrar"}
       </button>
     </form>
   );
