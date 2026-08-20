@@ -1,4 +1,7 @@
+import { linkWhatsapp } from "@/lib/utils/whatsapp";
+
 const BASE_URL = "https://qgpnozjaqoykzzmgafgt.supabase.co/storage/v1/object/public/logos";
+const TELEFONE_CONTATO = "31998544657";
 
 // Hardcoded de propósito — só o pilto (Frio a Frio) usa isso por enquanto,
 // não vale a complexidade de uma tela de gerenciar patrocinadores ainda. Se
@@ -29,7 +32,15 @@ export function Patrocinadores() {
         />
       ))}
       <p className="text-xs text-[var(--text-muted)] text-center pt-1">
-        Quer ter sua logo aqui? Entre em contato: (31) 99854-4657
+        Quem é visto é lembrado. Entre em contato:{" "}
+        <a
+          href={linkWhatsapp(TELEFONE_CONTATO, "")}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline hover:text-[var(--text-secondary)] transition-colors"
+        >
+          (31) 99854-4657
+        </a>
       </p>
     </div>
   );
