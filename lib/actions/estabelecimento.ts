@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { gerarTema, tokensParaCss } from "@/lib/theme/tokens";
+import { retryUmaVez } from "@/lib/utils/retry";
 
 export type EstabelecimentoAtual = {
   id: string;
@@ -28,21 +29,37 @@ export async function buscarEstabelecimentoAtual(): Promise<EstabelecimentoAtual
 
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await retryUmaVez(() => supabase.auth.getUser());
   if (!user) return null;
 
-  const { data: vinculo } = await supabase
-    .from("usuarios_estabelecimento")
-    .select("nome, estabelecimento_id")
-    .eq("id", user.id)
-    .single();
+  // retryUmaVez (não só no catch, também no `error` retornado): o
+  // PostgREST às vezes rejeita o JWT recém-emitido logo após um login novo
+  // ("JWT issued at future", transitório — ver lib/utils/retry.ts) sem
+  // necessariamente lançar exceção, só devolvendo error preenchido. Sem o
+  // retry aqui, isso era tratado como "sem vínculo" e mandava de volta pro
+  // login por engano, mesmo o usuário estando de fato logado.
+  const buscarVinculo = async () => {
+    const resultado = await supabase
+      .from("usuarios_estabelecimento")
+      .select("nome, estabelecimento_id")
+      .eq("id", user.id)
+      .single();
+    if (resultado.error) throw resultado.error;
+    return resultado.data;
+  };
+  const vinculo = await retryUmaVez(buscarVinculo).catch(() => null);
   if (!vinculo) return null;
 
-  const { data: estabelecimento } = await supabase
-    .from("estabelecimentos")
-    .select("id, nome, cor_primaria, cor_destaque, logo_url")
-    .eq("id", vinculo.estabelecimento_id)
-    .single();
+  const buscarEstabelecimento = async () => {
+    const resultado = await supabase
+      .from("estabelecimentos")
+      .select("id, nome, cor_primaria, cor_destaque, logo_url")
+      .eq("id", vinculo.estabelecimento_id)
+      .single();
+    if (resultado.error) throw resultado.error;
+    return resultado.data;
+  };
+  const estabelecimento = await retryUmaVez(buscarEstabelecimento).catch(() => null);
   if (!estabelecimento) return null;
 
   const tokens = gerarTema(estabelecimento.cor_primaria, estabelecimento.cor_destaque);

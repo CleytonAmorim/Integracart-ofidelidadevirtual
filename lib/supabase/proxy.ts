@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { retryUmaVez } from "@/lib/utils/retry";
 
 /**
  * Atualiza a sessão do Supabase a cada request (renova o token quando necessário)
@@ -37,9 +38,18 @@ export async function updateSession(request: NextRequest) {
 
   // Revalida o token — necessário mesmo sem usar `user` diretamente aqui,
   // pois é essa chamada que dispara o refresh e a escrita dos novos cookies.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // retryUmaVez absorve o "JWT issued at future" transitório logo após um
+  // login novo (ver lib/utils/retry.ts) — sem isso, derrubava a página com
+  // erro 500 (confirmado em produção). Se persistir mesmo com o retry,
+  // trata como deslogado (mais seguro que travar a página).
+  let user = null;
+  try {
+    ({
+      data: { user },
+    } = await retryUmaVez(() => supabase.auth.getUser()));
+  } catch {
+    user = null;
+  }
 
   const path = request.nextUrl.pathname;
   const isRotaProtegida = path.startsWith("/dashboard") || path.startsWith("/clientes") || path.startsWith("/configuracoes");
