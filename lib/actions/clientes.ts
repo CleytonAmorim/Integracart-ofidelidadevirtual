@@ -75,8 +75,13 @@ export async function buscarClientes(query: string, status?: StatusCliente): Pro
   }
 
   if (status) {
+    // Limite alto o bastante pra não truncar silenciosamente a lista de um
+    // estabelecimento real (status não é filtrável em SQL — ver comentário
+    // da função — então isso busca "quase tudo" e filtra em JS). 11MB de
+    // banco hoje, folga enorme até 500MB do plano free; revisar se algum
+    // estabelecimento passar de ~5000 clientes.
     const [{ data, error }, { data: config }] = await Promise.all([
-      request.order("nome", { ascending: true }).limit(500),
+      request.order("nome", { ascending: true }).limit(5000),
       supabase.from("configuracao_fidelidade").select("dias_para_atencao, dias_para_inativo").maybeSingle(),
     ]);
     if (error) throw error;
