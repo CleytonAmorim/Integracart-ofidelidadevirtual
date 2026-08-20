@@ -57,6 +57,11 @@ export async function updateSession(request: NextRequest) {
     supabaseResponse.cookies.getAll().forEach((cookie) => {
       redirectResponse.cookies.set(cookie);
     });
+    // Sem isso, o navegador (ou algum cache intermediário) pode guardar esse
+    // redirect e reproduzi-lo depois sem bater no servidor de novo — se a
+    // sessão já tiver mudado nesse meio-tempo, isso reproduz sozinho o loop
+    // /login <-> /clientes a partir do cache local, mesmo com os cookies OK.
+    redirectResponse.headers.set("Cache-Control", "no-store");
     return redirectResponse;
   }
 
