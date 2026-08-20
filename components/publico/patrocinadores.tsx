@@ -2,6 +2,8 @@ import { linkWhatsapp } from "@/lib/utils/whatsapp";
 
 const BASE_URL = "https://qgpnozjaqoykzzmgafgt.supabase.co/storage/v1/object/public/logos";
 const TELEFONE_CONTATO = "31998544657";
+const MENSAGEM_CONTATO =
+  "Oi! Vi o espaço de patrocínio no cartão fidelidade digital e queria ter minha marca divulgada ali também. Pode me passar mais informações?";
 
 // Hardcoded de propósito — só o pilto (Frio a Frio) usa isso por enquanto,
 // não vale a complexidade de uma tela de gerenciar patrocinadores ainda. Se
@@ -34,7 +36,7 @@ export function Patrocinadores() {
       <p className="text-xs text-[var(--text-muted)] text-center pt-1">
         Quem é visto é lembrado. Entre em contato:{" "}
         <a
-          href={linkWhatsapp(TELEFONE_CONTATO, "")}
+          href={linkWhatsapp(TELEFONE_CONTATO, MENSAGEM_CONTATO)}
           target="_blank"
           rel="noopener noreferrer"
           className="underline hover:text-[var(--text-secondary)] transition-colors"
