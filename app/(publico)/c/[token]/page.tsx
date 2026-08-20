@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { gerarTema, tokensParaCss } from "@/lib/theme/tokens";
 import { ClientePublicoCard } from "@/components/publico/cliente-publico-card";
+import { Patrocinadores } from "@/components/publico/patrocinadores";
 
 // Sem "use cache"/revalidate customizado aqui de propósito: pontos mudam a
 // cada compra, e essa é a tela que o próprio cliente confere no celular —
@@ -42,7 +43,7 @@ export default async function ClientePublicoPage(props: PageProps<"/c/[token]">)
   return (
     <div
       style={temaStyle as React.CSSProperties}
-      className="min-h-screen flex items-center justify-center p-4"
+      className="min-h-screen flex flex-col items-center justify-center gap-6 p-4"
     >
       <ClientePublicoCard
         primeiroNome={primeiroNome}
@@ -53,6 +54,7 @@ export default async function ClientePublicoPage(props: PageProps<"/c/[token]">)
         descontoDescricao={data.desconto_descricao}
         urlPublica={urlPublica}
       />
+      <Patrocinadores />
     </div>
   );
 }
